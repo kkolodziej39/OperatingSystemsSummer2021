@@ -87,7 +87,7 @@ class ProcessControlBlock:
         Will print a message stating the Process Control Board queue is empty if no Processes exist
         :return: Nothing
         """
-        print("Printing the Process Control Board queue...\n")
+        print("\nPrinting the Process Control Board queue...\n")
         if self.head is None:
             # Check if it is an empty Process Control Board queue, if so then tell the user the board is empty
             print("Process Control Board queue is empty!\n")
@@ -185,10 +185,11 @@ class ProcessControlBlock:
         if self.head is None:
             # First start off by checking if the Process Control Board queue is empty
             print("Error! Not able to delete a Process...the Process Control Board queue is empty!\n\n")
-            return
         elif processID is None:
             # Delete the head with no ID passed in
             # Start by moving the head up to the next node
+            print("Process Deleted: [Position: 1, Process ID: {}, Priority: {}]\n\n".format(self.head.processID,
+                                                                                            self.head.priority))
             self.head = self.head.next
         else:
             # Search for the Process within the Process Control Board queue by its process ID
@@ -225,33 +226,108 @@ class ProcessControlBlock:
 
 
 
+pcb = ProcessControlBlock()
 
 print("-----------------------------------------------------------------------------------------------------\n")
 print("Welcome to Kyle Kolodziej's Operating System's Project #1: Process Control Board queue Manipulation!\n")
-print("-----------------------------------------------------------------------------------------------------\n")
+print("-----------------------------------------------------------------------------------------------------")
 
 userInput = 0
-print("Would you like to...")
-print("\t1) Add Process(es) via an Input File")
-print("\t2) Add Process(es) via a process ID and priority from your input")
-print("\t3) Delete a Process")
-print("\t4) Exit\n")
-while userInput != 4:
+while userInput != 5:
+    print("-----------------------------------------------------------------------------------------------------\n")
+    print("Would you like to...")
+    print("\t1) Add Process(es) via an Input File")
+    print("\t2) Add Process(es) via a process ID and priority from your input")
+    print("\t3) Delete a Process")
+    print("\t4) Print the Process Control Board")
+    print("\t5) Exit\n")
+    print("-----------------------------------------------------------------------------------------------------\n")
     try:
-        userInput = int(input("Please input your option (1-4): "))
-        if 1 <= userInput <= 4:
+        userInput = int(input("Please input your option (1-5): "))
+        if 1 <= userInput <= 5:
             if userInput == 1:
-                print("add via file")
-                break
+                inputFileToAdd = True
+                while inputFileToAdd:
+                    try:
+                        inputFile = input("Please enter the input file's name: ")
+                        while inputFile == "":
+                            inputFile = input("Error, no file name received! Please enter the input file's name: ")
+                        if ".txt" not in inputFile:
+                            # If user doesn't add the file type, make it a text file
+                            inputFile = inputFile + ".txt"
+                        print("Opening and adding Processes from: ", inputFile)
+                        fileOpened = open(inputFile, "r")
+                        for line in fileOpened:
+                            #process input file
+                            print(line)
+                        inputFileToAdd = False
+                    except:
+                        print("\nError! Unable to open the input file given! Please try again...")
             elif userInput == 2:
-                print("add via input")
+                processID = input("Please enter the Process ID: ")
+                while processID == "":
+                    processID = input("Error! No Process ID entered. Please enter a Process ID: ")
+                print("Would you like to enter a priority for this process?")
+                print("\t1) Yes")
+                print("\t2) No")
+                priorityChoice = 0
+                while priorityChoice != 1 and priorityChoice != 2:
+                    try:
+                        priorityChoice = int(input("Please enter your choice (1 or 2): "))
+                        if priorityChoice == 1 or priorityChoice == 2:
+                            if priorityChoice == 1:
+                                #User wants to enter the Process' priority value
+                                needToAddProcess = True
+                                while needToAddProcess:
+                                    try:
+                                        priority = int(input("\nPlease enter the priority (integer >= 1): "))
+                                        if priority >= 1:
+                                            pcb.addProcess(processID, priority)
+                                            needToAddProcess = False
+                                        else:
+                                            raise Exception
+                                    except:
+                                        print("Error! Please enter a valid priority value!")
+                            else:
+                                #Priority is null, just add
+                                pcb.addProcess(processID)
+                            break
+                        else:
+                            raise Exception
+                    except:
+                        print("\nError, invalid option! Please input a valid option!")
             elif userInput == 3:
-                print("delete")
+                print("Would you like to delete a specific Process? If not, will default to the Process at the start of the queue")
+                print("\t1) Yes")
+                print("\t2) No")
+                deleteChoice = 0
+                while deleteChoice != 1 and deleteChoice != 2:
+                    try:
+                        deleteChoice = int(input("Please enter your choice (1 or 2): "))
+                        if deleteChoice == 1 or deleteChoice == 2:
+                            # Valid choice by the user
+                            if deleteChoice == 1:
+                                # Get process ID to be deleted
+                                processID = input("Please enter the Process ID for the Process to be deleted: ")
+                                pcb.deleteProcess(processID)
+                            else:
+                                # No process ID passed in, just delete the default option at the start
+                                pcb.deleteProcess()
+                        else:
+                            raise Exception
+                    except:
+                        #invalid choice
+                        print("\nError, invalid option! Please input a valid option!")
+            elif userInput == 4:
+                pcb.printProcessControlBlock()
             else:
-                print("Bye")
+                print("\n-----------------------------------------------------------------------------------------------------\n")
+                print("Thank you for using Kyle Kolodziej's Process Control Board Queue! Goodbye!")
+                print(
+                    "\n-----------------------------------------------------------------------------------------------------\n")
                 break
-            break
-        raise Exception()
+        else:
+            raise Exception
     except:
         print("\nError, invalid option! Please input a valid option!")
 
