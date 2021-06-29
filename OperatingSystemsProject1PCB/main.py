@@ -1,7 +1,7 @@
 """
 Author: Kyle Kolodziej
 Created: June 6th, 2021
-Last Updated: June 23rd, 2021
+Last Updated: June 28th, 2021
 """
 import sys
 import numpy as np
@@ -181,7 +181,11 @@ class ProcessControlBlock:
             a string that contains the Process ID of the Process (can be a mix of letters, numbers, and symbols)
         :return: Nothing
         """
-        print("Deleting Process with process ID '" + str(processID) + "'...\n")
+        if processID is None:
+            print("\nDeleting Process from the default position (the head)...\n")
+        else:
+            print("\nDeleting Process with process ID '" + str(processID) + "'...\n")
+
         if self.head is None:
             # First start off by checking if the Process Control Board queue is empty
             print("Error! Not able to delete a Process...the Process Control Board queue is empty!\n\n")
@@ -224,14 +228,11 @@ class ProcessControlBlock:
                     if curr.next is None:
                         self.tail = prev
 
-
-
-pcb = ProcessControlBlock()
-
 print("-----------------------------------------------------------------------------------------------------\n")
 print("Welcome to Kyle Kolodziej's Operating System's Project #1: Process Control Board queue Manipulation!\n")
 print("-----------------------------------------------------------------------------------------------------")
 
+pcb = ProcessControlBlock()
 userInput = 0
 while userInput != 5:
     print("-----------------------------------------------------------------------------------------------------\n")
@@ -255,11 +256,17 @@ while userInput != 5:
                         if ".txt" not in inputFile:
                             # If user doesn't add the file type, make it a text file
                             inputFile = inputFile + ".txt"
-                        print("Opening and adding Processes from: ", inputFile)
                         fileOpened = open(inputFile, "r")
                         for line in fileOpened:
                             #process input file
-                            print(line)
+                            if line.startswith("process"):
+                                pass
+                            else:
+                                splittedString = line.split(',')
+                                processID = splittedString[0]
+                                priority = splittedString[1][1:]
+                                pcb.addProcess(processID, int(priority))
+                        print("\nSuccessfully added Processes from: ", inputFile)
                         inputFileToAdd = False
                     except:
                         print("\nError! Unable to open the input file given! Please try again...")
