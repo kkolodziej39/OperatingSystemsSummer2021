@@ -337,28 +337,3 @@ while userInput != 5:
             raise Exception
     except:
         print("\nError, invalid option! Please input a valid option!")
-
-
-    # if userInput == 4:
-    #     print("Bye")
-    #     break
-    #
-    # while userInput < 1 or userInput > 4:
-    #     userInput = int(input("\nError! Invalid option! Please input a valid option (1-4): "))
-
-
-
-
-# pcb = ProcessControlBlock('1',2)
-# #pcb.printProcessControlBlock()
-# pcb.addProcess('12')
-# #pcb.printProcessControlBlock()
-# pcb.addProcess('11')
-# #pcb.printProcessControlBlock()
-# pcb.addProcess('12', 2)
-#
-# pcb.printProcessControlBlock()
-# # for i in range(20):
-# #     pcb.addProcess(np.random.randint(1, 1000000), i)
-# pcb.deleteProcess('12')
-# pcb.printProcessControlBlock()
