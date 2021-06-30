@@ -1,7 +1,7 @@
 """
 Author: Kyle Kolodziej
 Created: June 6th, 2021
-Last Updated: June 28th, 2021
+Last Updated: June 30th, 2021
 """
 import sys
 import numpy as np
@@ -131,12 +131,8 @@ class ProcessControlBlock:
             self.tail = process
         elif priority is None:
             # Add process to default position (the end/tail)
-            prev = self.head
-            curr = self.head.next
-            while curr is not None:
-                curr = curr.next
-                prev = prev.next
-            prev.next = process
+            curr = self.tail
+            curr.next = process
             self.tail = process
         else:
             # Find where the Process should go in terms of priority
@@ -195,6 +191,8 @@ class ProcessControlBlock:
             print("Process Deleted: [Position: 1, Process ID: {}, Priority: {}]\n\n".format(self.head.processID,
                                                                                             self.head.priority))
             self.head = self.head.next
+            if self.head is None:
+                self.tail = None
         else:
             # Search for the Process within the Process Control Board queue by its process ID
             if processID == self.head.processID:
@@ -206,6 +204,8 @@ class ProcessControlBlock:
                 # and got deleted as will need to update the tail of the Process Control Board queue
                 if self.head is None:
                     self.tail = None
+            elif self.head.next is None:
+                print("Error! Process ID '{}' does not exist in the Process Control Board queue!\n\n".format(processID))
             else:
                 count = 2
                 curr = self.head.next
@@ -235,13 +235,13 @@ print("-------------------------------------------------------------------------
 pcb = ProcessControlBlock()
 userInput = 0
 while userInput != 5:
-    print("-----------------------------------------------------------------------------------------------------\n")
+    print("-----------------------------------------------------------------------------------------------------")
     print("Would you like to...")
     print("\t1) Add Process(es) via an Input File")
     print("\t2) Add Process(es) via a process ID and priority from your input")
     print("\t3) Delete a Process")
     print("\t4) Print the Process Control Board")
-    print("\t5) Exit\n")
+    print("\t5) Exit")
     print("-----------------------------------------------------------------------------------------------------\n")
     try:
         userInput = int(input("Please input your option (1-5): "))
