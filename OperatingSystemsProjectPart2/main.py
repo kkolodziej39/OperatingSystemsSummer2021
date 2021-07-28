@@ -1,17 +1,13 @@
 """
 Author: Kyle Kolodziej
 Created: July 12th, 2021
-Last Updated: July 25th, 2021
+Last Updated: July 27th, 2021
 """
 import operator
 import sys
 import numpy as np
 from tabulate import tabulate
-
-# Implement Shortest Job First (SJF) scheduling and Nonpreemptive Priority scheduling (Use only 1,2,3,4 for priorities and assume 1 is
-# the highest priority). Compare these scheduling algorithms in terms of average
-# waiting time on a given sample of processes.
-
+import matplotlib.pyplot as plt
 
 """
 Shortest Job First algo
@@ -28,6 +24,7 @@ Shortest Job First algo
     - In case of a tie give the process with the higher priority execution
 5) Repeat step 4 until array is empty
 
+Adjust Non Preemptive Priority to go by Priority rather than burst time
 
 """
 
@@ -97,15 +94,18 @@ class Process:
         return self.burstTime
 
 def runShortestJobFirst(processArray):
+    numProcesses = len(processArray)
     returnArray = []
     currTime = 0
     totalWaitTime = 0
+    totalTurnaroundTime = 0
 
     #first process here
     firstProcess = processArray[0]
     processArray.remove(firstProcess)
     firstProcess.setWaitTime(0)
     firstProcess.setTurnaroundTime(firstProcess.burstTime)
+    totalTurnaroundTime += firstProcess.burstTime
     returnArray.append(firstProcess)
     currTime += firstProcess.burstTime
     while len(processArray) > 1:
@@ -125,31 +125,186 @@ def runShortestJobFirst(processArray):
                 break
         # index contains the process we want
         newProcess = processArray[index]
-        newProcess.setWaitTime(currTime - newProcess.arrivalTime)
+        newWaitTime = currTime - newProcess.arrivalTime  # Calculate this Process' wait time
+        newProcess.setWaitTime(newWaitTime)
+        totalWaitTime += newWaitTime
         currTime += newProcess.burstTime
-        newProcess.setTurnaroundTime(currTime - newProcess.arrivalTime)
+        newTurnaroundTime = currTime - newProcess.arrivalTime  # Calculate this Process' turnaround time
+        totalTurnaroundTime += newTurnaroundTime
+        newProcess.setTurnaroundTime(newTurnaroundTime)
         returnArray.append(newProcess)
         del processArray[index]
 
     newProcess = processArray[0]
-    newProcess.setWaitTime(currTime - newProcess.arrivalTime)
+    newWaitTime = currTime - newProcess.arrivalTime  # Calculate this Process' wait time
+    newProcess.setWaitTime(newWaitTime)
+    totalWaitTime += newWaitTime
     currTime += newProcess.burstTime
-    newProcess.setTurnaroundTime(currTime - newProcess.arrivalTime)
+    newTurnaroundTime = currTime - newProcess.arrivalTime  # Calculate this Process' turnaround time
+    newProcess.setTurnaroundTime(newTurnaroundTime)
+    totalTurnaroundTime += newTurnaroundTime
     returnArray.append(newProcess)
 
+    # An array that will contain the total time, average wait time, and average turnaround time of this algo
+    algoStats = []
+    algoStats.append(currTime)
+    averageWaitTime = totalWaitTime * 1.0 / numProcesses
+    algoStats.append(averageWaitTime)
+    averageTurnaroundTime = totalTurnaroundTime * 1.0 / numProcesses
+    algoStats.append(averageTurnaroundTime)
+
+    return returnArray, algoStats
+
+def runHighestPriority(processArray):
+    numProcesses = len(processArray)
+    returnArray = []
+    currTime = 0
+    totalWaitTime = 0
+    totalTurnaroundTime = 0
+
+    #first process here
+    firstProcess = processArray[0]
+    processArray.remove(firstProcess)
+    firstProcess.setWaitTime(0)
+    firstProcess.setTurnaroundTime(firstProcess.burstTime)
+    totalTurnaroundTime += firstProcess.burstTime
+    returnArray.append(firstProcess)
+    currTime += firstProcess.burstTime
+    while len(processArray) > 1:
+        #do stuff
+        index = 0
+        bestPriority = processArray[0].priority
+        currBurst = processArray[0].burstTime
+
+        for i in range(1, len(processArray)):
+            if processArray[i].arrivalTime <= currTime:
+                if processArray[i].priority < bestPriority or (processArray[i].priority == bestPriority and processArray[i].burstTime < currBurst) :
+                    # update process
+                    index = i
+                    bestPriority = processArray[i].priority
+                    currBurst = processArray[i].burstTime
+            else:
+                break
+        # index contains the process we want
+        newProcess = processArray[index]
+        newWaitTime = currTime - newProcess.arrivalTime # Calculate this Process' wait time
+        newProcess.setWaitTime(newWaitTime)
+        totalWaitTime += newWaitTime
+        currTime += newProcess.burstTime
+        newTurnaroundTime = currTime - newProcess.arrivalTime # Calculate this Process' turnaround time
+        newProcess.setTurnaroundTime(newTurnaroundTime)
+        totalTurnaroundTime += newTurnaroundTime
+        returnArray.append(newProcess)
+        del processArray[index]
+
+    newProcess = processArray[0]
+    newWaitTime = currTime - newProcess.arrivalTime  # Calculate this Process' wait time
+    newProcess.setWaitTime(newWaitTime)
+    totalWaitTime += newWaitTime
+    currTime += newProcess.burstTime
+    newTurnaroundTime = currTime - newProcess.arrivalTime  # Calculate this Process' turnaround time
+    newProcess.setTurnaroundTime(newTurnaroundTime)
+    totalTurnaroundTime += newTurnaroundTime
+    returnArray.append(newProcess)
+
+    # An array that will contain the total time, average wait time, and average turnaround time of this algo
+    algoStats = []
+    algoStats.append(currTime)
+    averageWaitTime = totalWaitTime * 1.0 / numProcesses
+    algoStats.append(averageWaitTime)
+    averageTurnaroundTime = totalTurnaroundTime * 1.0 / numProcesses
+    algoStats.append(averageTurnaroundTime)
+
+    return returnArray, algoStats
+
+def printStatistics(statsArray):
+    print("Total Execution Time: ", statsArray[0])
+    print("Average Wait Time: ", statsArray[1])
+    print("Average Turnaround Time: ", statsArray[2])
+    print("\n----------------------------------------------------------------------------------------------\n")
+
+def calculateStats():
+    # Need to run the different file size for both SJF and NPP Scheduling Algorithms
+    fileNames = ["sample_input_scheduling_part2.txt", "processInputFile10.txt", "processInputFile25.txt",
+                 "processInputFile50.txt", "processInputFile100.txt"]
+    allNumbersForSJF = []
+    allNumbersForNPP = []
+
+    for file in fileNames:
+        statsArraySJF = executeInputFile(file, "sjf", False)
+        allNumbersForSJF.append(statsArraySJF)
+
+        statsArrayNPP = executeInputFile(file, "npp", False)
+        allNumbersForNPP.append(statsArrayNPP)
+
+    return allNumbersForSJF, allNumbersForNPP
+
+def generateCharts():
+    sjfArray, nppArray = calculateStats()
+    numFiles = [5,10,25,50,100]
+    sjfTime = []
+    sjfWait = []
+    sjfTurnaround = []
+    nppTime = []
+    nppWait = []
+    nppTurnaround = []
+
+    # total time, wait time, turn around time
+    for i in range(len(sjfArray)):
+        sjfTime.append(sjfArray[i][0])
+        sjfWait.append(sjfArray[i][1])
+        sjfTurnaround.append(sjfArray[i][2])
+
+        nppTime.append(nppArray[i][0])
+        nppWait.append(nppArray[i][1])
+        nppTurnaround.append(nppArray[i][2])
 
 
-    return returnArray
+    X_axis = np.arange(len(numFiles))
+
+    plt.bar(X_axis - 0.2, sjfTime, 0.4, label='Shortest Job First')
+    plt.bar(X_axis + 0.2, nppTime, 0.4, label='Non Preemptive Priority')
+    plt.xticks(X_axis, numFiles)
+    plt.xlabel("Number of Files")
+    plt.ylabel("Time")
+    plt.title("Shortest Job First vs Non Preemptive Priority Total Times")
+    plt.legend()
+    plt.savefig("Shortest Job First vs Non Preemptive Priority - Total Time.png")
+    plt.show()
+
+    plt.bar(X_axis - 0.2, sjfWait, 0.4, label='Shortest Job First')
+    plt.bar(X_axis + 0.2, nppWait, 0.4, label='Non Preemptive Priority')
+    plt.xticks(X_axis, numFiles)
+    plt.xlabel("Number of Files")
+    plt.ylabel("Time")
+    plt.title("Shortest Job First vs Non Preemptive Priority Average Wait Times")
+    plt.legend()
+    plt.savefig("Shortest Job First vs Non Preemptive Priority - Average Wait Time.png")
+    plt.show()
+
+    plt.bar(X_axis - 0.2, sjfTurnaround, 0.4, label='Shortest Job First')
+    plt.bar(X_axis + 0.2, nppTurnaround, 0.4, label='Non Preemptive Priority')
+    plt.xticks(X_axis, numFiles)
+    plt.xlabel("Number of Files")
+    plt.ylabel("Time")
+    plt.legend()
+    plt.title("Shortest Job First vs Non Preemptive Priority Average Turnaround Times")
+    plt.savefig("Shortest Job First vs Non Preemptive Priority - Average Turnaround Time.png")
+    plt.show()
 
 
-def executeInputFile(inputFileName, algorithm):
+def executeInputFile(inputFileName, algorithm, toPrint=True):
     processArray = []
-    print("\n----------------------------------------------------------------------------------------------")
-    print("Input file being executed: " + inputFileName)
+
+    if toPrint:
+        print("\n----------------------------------------------------------------------------------------------")
+        print("Input file being executed: " + inputFileName)
+
     if algorithm == "sjf":
         # Shortest Job First Algo
-        print("Algorithm: Shortest Job First Scheduling")
-        print("----------------------------------------------------------------------------------------------\n")
+        if toPrint:
+            print("Algorithm: Shortest Job First Scheduling")
+            print("----------------------------------------------------------------------------------------------\n")
 
         fileOpened = open(inputFileName, "r")
         for line in fileOpened:
@@ -167,34 +322,59 @@ def executeInputFile(inputFileName, algorithm):
         # Done reading through the file
         # Time to sort the array of processes based on their arrival time
         processArray.sort(key=operator.attrgetter('arrivalTime'))
-        # print("----------------------------------------------------------------------------------------------------------------------")
-        # print("Process ID\t\t|\t\tArrival Time\t\t|\t\tBurst Time\t\t|\t\tWait Time\t\t|\t\tTurnaround Time")
-        # print(
-        #     "----------------------------------------------------------------------------------------------------------------------")
+
+        orderedArray, statsArray = runShortestJobFirst(processArray)
+
+        if toPrint:
+            columns = ('Process ID', 'Arrival Time', 'Burst Time', 'Priority', 'Wait Time', 'Turnaround Time')
+            n_rows = len(orderedArray)
+            cell_text = []
+            for row in range(n_rows):
+                processInfo = [orderedArray[row].processID, orderedArray[row].arrivalTime, orderedArray[row].burstTime, orderedArray[row].priority, orderedArray[row].waitTime, orderedArray[row].turnaroundTime]
+                cell_text.append(processInfo)
 
 
-        orderedArray = runShortestJobFirst(processArray)
-        columns = ('Process ID', 'Arrival Time', 'Burst Time', 'Priority', 'Wait Time', 'Turnaround Time')
-        #columns = ('Process ID', 'Arrival Time', 'Burst Time', 'Priority')
-        n_rows = len(orderedArray)
-        cell_text = []
-        for row in range(n_rows):
-            processInfo = [orderedArray[row].processID, orderedArray[row].arrivalTime, orderedArray[row].burstTime, orderedArray[row].priority, orderedArray[row].waitTime, orderedArray[row].turnaroundTime]
-            cell_text.append(processInfo)
-        print(tabulate(cell_text, headers=columns, tablefmt="grid"))
-
-
-
-
-        # for i in range(len(processArray)):
-        #     print(processArray[i].processID + "\t\t\t\t|\t\t\t" + processArray[i].arrivalTime + "\t\t\t\t|\t\t\t" +
-        #           processArray[i].burstTime + "\t\t\t|\t\t\t" + str(-1) + "\t\t\t|\t\t\t" + str(-2))
-        #     print("----------------------------------------------------------------------------------------------------------------------")
+            print(tabulate(cell_text, headers=columns, tablefmt="grid"))
+            printStatistics(statsArray)
+        else:
+            return statsArray
 
     else:
         #Non preemptive
-        print("Algorithm: Non-Preemptive Priority Scheduling")
-        print("----------------------------------------------------------------------------------------------\n")
+        if toPrint:
+            print("Algorithm: Non-Preemptive Priority Scheduling")
+            print("----------------------------------------------------------------------------------------------\n")
+
+        fileOpened = open(inputFileName, "r")
+        for line in fileOpened:
+            # process input file
+            if line.startswith("process") or line.startswith("Process"):
+                pass
+            else:
+                splittedString = line.split(',')
+                processID = splittedString[0]
+                arrivalTime = int(splittedString[1])
+                burstTime = int(splittedString[2])
+                priority = splittedString[3]
+                newProcess = Process(processID, arrivalTime, burstTime, priority)
+                processArray.append(newProcess)
+        # Done reading through the file
+        # Time to sort the array of processes based on their priority
+        processArray.sort(key=operator.attrgetter('arrivalTime'))
+        orderedArray, statsArray = runHighestPriority(processArray)
+
+        if toPrint:
+            columns = ('Process ID', 'Arrival Time', 'Burst Time', 'Priority', 'Wait Time', 'Turnaround Time')
+            n_rows = len(orderedArray)
+            cell_text = []
+            for row in range(n_rows):
+                processInfo = [orderedArray[row].processID, orderedArray[row].arrivalTime, orderedArray[row].burstTime,
+                               orderedArray[row].priority, orderedArray[row].waitTime, orderedArray[row].turnaroundTime]
+                cell_text.append(processInfo)
+            print(tabulate(cell_text, headers=columns, tablefmt="grid"))
+            printStatistics(statsArray)
+        else:
+            return statsArray
     return 0
 
 print("----------------------------------------------------------------------------------------------------------------------\n")
@@ -202,16 +382,17 @@ print("Welcome to Kyle Kolodziej's Operating System's Project #2: Shortest Job F
 print("----------------------------------------------------------------------------------------------------------------------")
 
 userInput = 0
-while userInput != 3:
+while userInput != 4:
     print("-----------------------------------------------------------------------------------------------------")
     print("Would you like to...")
     print("\t1) Read through an Input file using Shortest Job First Scheduling")
     print("\t2) Read through an Input file using Non-Preemptive Priority Scheduling")
-    print("\t3) Exit")
+    print("\t3) Generate Charts for both Shortest Job First Scheduling and Non-Preemptive Priority Scheduling")
+    print("\t4) Exit")
     print("-----------------------------------------------------------------------------------------------------\n")
     try:
-        userInput = int(input("Please input your option (1-3): "))
-        if 1 <= userInput <= 3:
+        userInput = int(input("Please input your option (1-4): "))
+        if 1 <= userInput <= 4:
             if userInput == 1:
                 # Shortest Job First Algo
                 shortestJobFirstSelection = 0
@@ -249,7 +430,7 @@ while userInput != 3:
                                 break
                             else:
                                 # Exit the program
-                                userInput = 3
+                                userInput = 4
                                 print("Exiting the program...")
                                 print(
                                     "\n-----------------------------------------------------------------------------------------------------\n")
@@ -257,70 +438,65 @@ while userInput != 3:
                                 print(
                                     "\n-----------------------------------------------------------------------------------------------------\n")
                                 break
-
-                            # inputFileToAdd = True
-                            # while inputFileToAdd:
-                            #     try:
-                            #
-                            #         inputFile = input("Please enter the input file's name: ")
-                            #         while inputFile == "":
-                            #             inputFile = input("Error, no file name received! Please enter the input file's name: ")
-                            #         if ".txt" not in inputFile:
-                            #             # If user doesn't add the file type, make it a text file
-                            #             inputFile = inputFile + ".txt"
-                            #         fileOpened = open(inputFile, "r")
-                            #         for line in fileOpened:
-                            #             #process input file
-                            #             if line.startswith("process"):
-                            #                 pass
-                            #             else:
-                            #                 splittedString = line.split(',')
-                            #                 processID = splittedString[0]
-                            #                 priority = splittedString[1][1:]
-                            #                 pcb.addProcess(processID, int(priority))
-                            #         print("\nSuccessfully added Processes from: ", inputFile)
-                            #         inputFileToAdd = False
-                            #     except:
-                            #         print("\nError! Unable to open the input file given! Please try again...")
                         else:
                             raise Exception
                     except:
                         print("\nError, invalid option! Please input a valid option!")
-
             elif userInput == 2:
-                # Non-Preemptive Priority Algo
-                processID = input("Please enter the Process ID: ")
-                while processID == "":
-                    processID = input("Error! No Process ID entered. Please enter a Process ID: ")
-                print("Would you like to enter a priority for this process?")
-                print("\t1) Yes")
-                print("\t2) No")
-                priorityChoice = 0
-                while priorityChoice != 1 and priorityChoice != 2:
+                # Non Preemptive Priority Scheduling
+                prioriotySchedulingSelection = 0
+                while prioriotySchedulingSelection != 6 and prioriotySchedulingSelection != 7:
+                    print("\nPlease select the size of the Input File you would like to execute...")
+                    print("\t1) 5 Processes (the class sample file)")
+                    print("\t2) 10 Processes (randomly generated file)")
+                    print("\t3) 25 Processes (randomly generated file)")
+                    print("\t4) 50 Processes (randomly generated file)")
+                    print("\t5) 100 Processes (randomly generated file)")
+                    print("\t6) Go Back to the Main Menu")
+                    print("\t7) Exit the Program\n")
                     try:
-                        priorityChoice = int(input("Please enter your choice (1 or 2): "))
-                        if priorityChoice == 1 or priorityChoice == 2:
-                            if priorityChoice == 1:
-                                #User wants to enter the Process' priority value
-                                needToAddProcess = True
-                                while needToAddProcess:
-                                    try:
-                                        priority = int(input("\nPlease enter the priority (integer >= 1): "))
-                                        if priority >= 1:
-                                            pcb.addProcess(processID, priority)
-                                            needToAddProcess = False
-                                        else:
-                                            raise Exception
-                                    except:
-                                        print("Error! Please enter a valid priority value!")
+                        prioriotySchedulingSelection = int(input("Please input your option (1-7): "))
+                        if 1 <= prioriotySchedulingSelection <= 7:
+                            if prioriotySchedulingSelection == 1:
+                                # Run the class sample file
+                                executeInputFile("sample_input_scheduling_part2.txt", "npp")
+                            elif prioriotySchedulingSelection == 2:
+                                # Run the file with 10 processes
+                                executeInputFile("processInputFile10.txt", "npp")
+                            elif prioriotySchedulingSelection == 3:
+                                # Run the file with 25 processes
+                                executeInputFile("processInputFile25.txt", "npp")
+                            elif prioriotySchedulingSelection == 4:
+                                # Run the file with 50 processes
+                                executeInputFile("processInputFile50.txt", "npp")
+                            elif prioriotySchedulingSelection == 5:
+                                # Run the file with 100 processes
+                                executeInputFile("processInputFile100.txt", "npp")
+                            elif prioriotySchedulingSelection == 6:
+                                # Go back to the main menu
+                                print("Returning to the main menu...\n")
+                                userInput = 0
+                                break
                             else:
-                                #Priority is null, just add
-                                pcb.addProcess(processID)
-                            break
+                                # Exit the program
+                                userInput = 4
+                                print("Exiting the program...")
+                                print(
+                                    "\n-----------------------------------------------------------------------------------------------------\n")
+                                print("Thank you for using Kyle Kolodziej's Operating Systems Project Part 2! Goodbye!")
+                                print(
+                                    "\n-----------------------------------------------------------------------------------------------------\n")
+                                break
                         else:
                             raise Exception
                     except:
                         print("\nError, invalid option! Please input a valid option!")
+            elif userInput == 3:
+                print("Generating Charts...\n")
+                generateCharts()
+                print("Charts Completed...")
+                print(
+                    "----------------------------------------------------------------------------------------------\n")
             else:
                 print("\n-----------------------------------------------------------------------------------------------------\n")
                 print("Thank you for using Kyle Kolodziej's Operating Systems Project Part 2! Goodbye!")
