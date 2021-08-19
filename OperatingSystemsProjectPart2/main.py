@@ -113,6 +113,8 @@ def runShortestJobFirst(processArray):
         index = 0
         currPriority = processArray[0].priority
         lowBurst = processArray[0].burstTime
+        while currTime < processArray[0].arrivalTime:
+            currTime += 1
 
         for i in range(1, len(processArray)):
             if processArray[i].arrivalTime <= currTime:
@@ -175,6 +177,8 @@ def runHighestPriority(processArray):
         index = 0
         bestPriority = processArray[0].priority
         currBurst = processArray[0].burstTime
+        while currTime < processArray[0].arrivalTime:
+            currTime += 1
 
         for i in range(1, len(processArray)):
             if processArray[i].arrivalTime <= currTime:
